@@ -11,6 +11,8 @@
   - `GET /health`
   - `GET /status`
   - `GET /events?limit=100`
+  - `GET /devices`
+  - `GET /devices?active_scan=true`
 
 ## 快速开始
 
@@ -40,7 +42,34 @@
    ```bash
    curl http://127.0.0.1:8000/status
    curl http://127.0.0.1:8000/events?limit=20
+   curl http://127.0.0.1:8000/devices
    ```
+
+## 查看当前 Wi-Fi 中的所有设备
+
+`GET /devices` 会返回当前局域网内已发现的设备列表，字段包括：
+
+- `ip`
+- `mac`
+- `hostname`
+- `interface`
+- `state`
+- `source`
+- `known`
+- `device_name`
+- `online`
+
+探测来源优先包含：
+
+- `ip neigh show`，适合 Linux
+- `arp -a`，适合作为 macOS / 通用回退
+- `arp-scan --localnet`，在 `use_active_scan: true` 或请求参数 `active_scan=true` 时启用
+
+示例：
+
+```bash
+curl 'http://127.0.0.1:8000/devices?active_scan=true'
+```
 
 ## 如何拿到手机 MAC 地址
 
