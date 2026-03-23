@@ -95,10 +95,16 @@ def load_config(path: Path) -> dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
-def run_cmd(cmd: list[str]) -> str:
+def run_cmd(cmd: list[str], timeout: float | None = None) -> str:
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    except FileNotFoundError:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return ""
     if proc.returncode != 0:
         return ""
@@ -261,15 +267,30 @@ def collect_network_devices(active_scan: bool) -> list[dict[str, Any]]:
     return merge_network_devices(device_groups)
 
 
+def ping_host(ip: str) -> bool:
+    return bool(run_cmd(["ping", "-c", "1", ip], timeout=2.0))
+
+
+def verify_arp_known_devices(arp_devices: list[NetworkDevice]) -> set[str]:
+    arp_by_mac = {device.mac: device for device in arp_devices if device.ip}
+    verified: set[str] = set()
+    for mac in tracker.devices:
+        device = arp_by_mac.get(mac)
+        if device and ping_host(device.ip or ""):
+            verified.add(mac)
+    return verified
+
+
 def collect_connected_macs(active_scan: bool) -> tuple[set[str], str]:
     """Return (mac_set, source)."""
     neighbors = parse_ip_neigh(run_cmd(["ip", "neigh", "show"]))
     if neighbors:
         return neighbors, "ip-neigh"
 
-    arp_neighbors = {device.mac for device in parse_arp_table_devices(run_cmd(["arp", "-a"]))}
+    arp_devices = parse_arp_table_devices(run_cmd(["arp", "-a"]))
+    arp_neighbors = verify_arp_known_devices(arp_devices)
     if arp_neighbors:
-        return arp_neighbors, "arp"
+        return arp_neighbors, "arp+ping"
 
     if active_scan:
         scanned = parse_arp_scan(run_cmd(["arp-scan", "--localnet"]))

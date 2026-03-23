@@ -65,6 +65,8 @@
 - `arp -a`，适合作为 macOS / 通用回退
 - `arp-scan --localnet`，在 `use_active_scan: true` 或请求参数 `active_scan=true` 时启用
 
+已配置在 `config.yaml` 中的设备，在走 `arp -a` 回退时会额外做一次 `ping` 验证，避免 ARP 缓存导致刚断网的设备被继续判定为在线。
+
 示例：
 
 ```bash
