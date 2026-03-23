@@ -1,0 +1,11 @@
+# 轮询间隔（秒）
+interval_seconds: 15
+
+# 如果 `ip neigh show` 取不到设备，可切换为主动扫描（需要安装 arp-scan）
+use_active_scan: false
+
+devices:
+  - name: "Alice-iPhone"
+    mac: "AA:BB:CC:DD:EE:01"
+  - name: "Bob-Android"
+    mac: "AA:BB:CC:DD:EE:02"
