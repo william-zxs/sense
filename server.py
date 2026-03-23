@@ -66,14 +66,22 @@ class PresenceTracker:
             now_online = mac in connected_macs
             if now_online != self.status[mac]:
                 self.status[mac] = now_online
-                self.events.append(
-                    PresenceEvent(
-                        ts=datetime.now(timezone.utc).isoformat(),
-                        device_name=device.name,
-                        mac=mac,
-                        online=now_online,
-                        source=source,
-                    )
+                event = PresenceEvent(
+                    ts=datetime.now(timezone.utc).isoformat(),
+                    device_name=device.name,
+                    mac=mac,
+                    online=now_online,
+                    source=source,
+                )
+                self.events.append(event)
+                state_text = "online" if now_online else "offline"
+                print(
+                    f"[presence] ts={event.ts} "
+                    f"device={event.device_name} "
+                    f"mac={event.mac} "
+                    f"state={state_text} "
+                    f"source={event.source}",
+                    flush=True,
                 )
 
     def snapshot(self) -> dict[str, Any]:
